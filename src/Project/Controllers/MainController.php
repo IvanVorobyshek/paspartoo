@@ -14,13 +14,22 @@ class MainController{
         $this->view = new View(__DIR__."/../../../templates");
     }
 
+    public function validation(array $properties)
+    {   
+        foreach ($properties as $key => &$value){
+            $properties[$key] = trim($value); // remove spaces at the beginning and at the end of the variable
+            $properties[$key] = htmlentities($value); //convert html tags
+        }
+        return $properties;
+    }
+
     public function main(){
         $db = Db::getInstance();
         $table1 = 'posts';
         $table2 = 'comments';
-        $posts = $db->selectPostsComments($table1);
-        $comments = $db->selectPostsComments($table2);
-        $postsCNP = $db->selectCountNegPos($table1);//count all positive negative POSTS
+        $posts = $db->selectPostsComments($table1);//select all posts
+        $comments = $db->selectPostsComments($table2);//select all comments
+        $postsCNP = $db->selectCountNegPos($table1);//count all, positive, negative POSTS
         // $all_posts = $db->selectCountAll($table1);
         // $negative_posts = $db->selectCountNegative($table1);
         // $positive_posts = $db->selectCountPositive($table1);
@@ -45,10 +54,15 @@ class MainController{
     }
 
     public function addPost(){
-        //проверить name i text на правильность
-        $name = $_POST['visitore_name'];
-        $text = $_POST['post'];
-        $post = new Post($name, $text);
+        $properties = [];
+        $properties['name'] = $_POST['visitore_name'];
+        $properties['post'] = $_POST['post'];
+        $properties = $this->validation($properties);
+        if (($properties['name'] == "") or ($properties['post'] == "")){
+            header('Location: /');
+            exit();
+        }
+        $post = new Post($properties['name'], $properties['post']);
         $postData = $post->varsToSavePost();
         $db = Db::getInstance();
         $table = 'posts';
@@ -57,11 +71,16 @@ class MainController{
     }
 
     public function addComment(){
-        //проверить name i text на правильность
-        $name = $_POST['visitore_name'];
-        $post_id = $_POST['post_id'];
-        $text = $_POST['comment'];
-        $comment = new Comment($post_id, $name, $text);
+        $properties = [];
+        $properties['name'] = $_POST['visitore_name'];
+        $properties['comment'] = $_POST['comment'];
+        $properties['post_id'] = (int)$_POST['post_id'];
+        $properties = $this->validation($properties);
+        if (($properties['name'] == "") or ($properties['comment'] == "") or (!is_numeric($properties['post_id']))){
+            header('Location: /');
+            exit();
+        }
+        $comment = new Comment($properties['post_id'], $properties['name'], $properties['comment']);
         $commentData = $comment->varsToSaveComment();
         $db = Db::getInstance();
         $table = 'comments';

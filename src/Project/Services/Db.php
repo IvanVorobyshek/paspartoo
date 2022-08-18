@@ -74,7 +74,6 @@
         }
 
         public function addOnePost($table, $postData){
-            //insert product into database
             $columns = [];
             $params = [];
             $paramsAndValues = [];
